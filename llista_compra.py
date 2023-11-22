@@ -11,7 +11,8 @@ app = Flask(__name__)
 valid_api_keys = {}
 articles = []
 last_id = 0
-with open("env.json") as conf:
+ruta_codi = "/home/xaviq/mysite/"
+with open(f"{ruta_codi}env.json") as conf:
   env = json.load(conf)
 
 users = {'obret':hashlib.sha256(b"sesam").hexdigest(), 'xavi':hashlib.sha256(b"1234").hexdigest()}
