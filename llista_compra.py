@@ -3,6 +3,8 @@
 from flask import Flask, request, jsonify
 import uuid
 import hashlib
+import mysql.connector
+
 app = Flask(__name__)
 
 
@@ -10,6 +12,61 @@ articles = []
 last_id = 0
 
 users = {'obret':hashlib.sha256(b"sesam").hexdigest(), 'xavi':hashlib.sha256(b"1234").hexdigest()}
+def check_tables():
+  try:
+      cursor = conn.cursor(buffered=True)
+      cursor.execute("SELECT * FROM articles;")
+      cursor.reset()
+      cursor.execute("SELECT * FROM usuaris;")
+      cursor.reset()
+      cursor.execute("SELECT * FROM api_keys;")
+      cursor.reset()
+  except mysql.connector.errors.ProgrammingError:
+      return False
+  return True
+
+def create_tables():
+  cursor = conn.cursor()
+  cursor.execute("Drop table if exists articles;")
+  cursor.execute("Drop table if exists usuaris;")
+  cursor.execute("Drop table if exists api_keys;")
+  
+  cursor.execute("""
+              Create table if not exists articles(
+                id int not null auto_increment,
+                nom varchar(255) unique,
+                quantitat int not null,
+                primary key (id)
+              )
+                """)
+  cursor.execute("""
+              Create table if not exists usuaris(
+                id int not null auto_increment,
+                nom varchar(255) unique,
+                password char(64) not null,
+                primary key (id)
+              )
+                """)
+  cursor.execute("""
+              Create table if not exists api_keys(
+                id int not null auto_increment,
+                usuari int not null references usuaris(id),
+                api_key varchar(100),
+                data_creacio DATETIME DEFAULT CURRENT_TIMESTAMP,
+                primary key (id)
+              )
+                """)
+  conn.commit()
+
+conn = mysql.connector.connect(
+                host='localhost',
+                user='xaviq',
+                password='MTIzNA==',
+                database='xaviq$default'
+                )
+if not check_tables():
+    create_tables()
+    
 @app.route('/articles/<int:article_id>',
            methods=['GET', 'PUT', 'DELETE'])
 def article(article_id=0):
