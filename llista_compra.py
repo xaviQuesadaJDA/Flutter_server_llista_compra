@@ -4,7 +4,10 @@ from flask import Flask, request, jsonify
 import uuid
 import hashlib
 import mysql.connector
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 app = Flask(__name__)
 
 
@@ -59,10 +62,10 @@ def create_tables():
   conn.commit()
 
 conn = mysql.connector.connect(
-                host='localhost',
-                user='xaviq',
-                password='MTIzNA==',
-                database='xaviq$default'
+                host=os.getenv('DB_HOST'),
+                user=os.getenv('DB_USER'),
+                password=os.getenv('DB_PWD'),
+                database=os.getenv('DB_NAME')
                 )
 if not check_tables():
     create_tables()
