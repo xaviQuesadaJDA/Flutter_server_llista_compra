@@ -3,7 +3,7 @@
 from flask import Flask, request, jsonify
 import uuid
 import hashlib
-import mysql.connector
+from persistencia import Persistencia
 import json
 
 app = Flask(__name__)
@@ -11,65 +11,10 @@ app = Flask(__name__)
 valid_api_keys = {}
 articles = []
 last_id = 0
-ruta_codi = "/home/xaviq/mysite/"
-with open(f"{ruta_codi}env.json") as conf:
-  env = json.load(conf)
 
 users = {'obret':hashlib.sha256(b"sesam").hexdigest(), 'xavi':hashlib.sha256(b"1234").hexdigest()}
-def check_tables():
-  try:
-      cursor = conn.cursor(buffered=True)
-      cursor.execute("SELECT * FROM articles;")
-      cursor.reset()
-      cursor.execute("SELECT * FROM usuaris;")
-      cursor.reset()
-      cursor.execute("SELECT * FROM api_keys;")
-      cursor.reset()
-  except mysql.connector.errors.ProgrammingError:
-      return False
-  return True
 
-def create_tables():
-  cursor = conn.cursor()
-  cursor.execute("Drop table if exists articles;")
-  cursor.execute("Drop table if exists usuaris;")
-  cursor.execute("Drop table if exists api_keys;")
-
-  cursor.execute("""
-              Create table if not exists articles(
-                id int not null auto_increment,
-                nom varchar(255) unique,
-                quantitat int not null,
-                primary key (id)
-              )
-                """)
-  cursor.execute("""
-              Create table if not exists usuaris(
-                id int not null auto_increment,
-                nom varchar(255) unique,
-                password char(64) not null,
-                primary key (id)
-              )
-                """)
-  cursor.execute("""
-              Create table if not exists api_keys(
-                id int not null auto_increment,
-                usuari int not null references usuaris(id),
-                api_key varchar(100),
-                data_creacio DATETIME DEFAULT CURRENT_TIMESTAMP,
-                primary key (id)
-              )
-                """)
-  conn.commit()
-
-conn = mysql.connector.connect(
-                host=env['db_host'],
-                user=env['db_user'],
-                password=env['db_pwd'],
-                database=env['db_name']
-                )
-if not check_tables():
-    create_tables()
+persistencia = Persistencia()
 
 @app.route('/articles/<int:article_id>',
            methods=['GET', 'PUT', 'DELETE'])
@@ -83,9 +28,9 @@ def article(article_id=0):
   if valid_api_keys.get(request.headers['x-api-key'], None) is None:
       return jsonify({"status": "error", "description": "Credencials no vàlides"}), 401
   if request.method == 'GET':
-    trobat = [art for art in articles if art["id"] == article_id]
-    if len(trobat) > 0:
-      return jsonify(trobat[0])
+    article = persistencia.get_article_by_id(article_id)
+    if article is not None:
+       return jsonify(article)
     return jsonify({}), 404
   elif request.method == 'DELETE':
     trobat = [art for art in articles if art["id"] == article_id]
@@ -135,4 +80,5 @@ def login():
     return jsonify({'resultat': 'success', 'x-api-key': nova_api_key})
   return jsonify({'resultat': 'error', 'user':usuari, 'pwd': paraula_pas}), 401
 
-app.run()
+if __name__ == "__main__":
+  app.run()
