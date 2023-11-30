@@ -33,9 +33,7 @@ def article(article_id=0):
        return jsonify(article)
     return jsonify({}), 404
   elif request.method == 'DELETE':
-    trobat = [art for art in articles if art["id"] == article_id]
-    if len(trobat) > 0:
-      articles.remove(trobat[0])
+    persistencia.remove_article_by_id(article_id)
     return jsonify({}), 204
   elif request.method == 'PUT':
     for index, value in enumerate(articles):
