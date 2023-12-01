@@ -33,8 +33,6 @@ class Persistencia():
         return True
 
     def create_tables(self):
-        if not self.conn._open_connection:
-            self.open_conn()
         cursor = self.conn.cursor()
         cursor.execute("Drop table if exists articles;")
         cursor.execute("Drop table if exists usuaris;")
@@ -66,4 +64,12 @@ class Persistencia():
                     )
                         """)
         self.conn.commit()
-        
+
+    def get_article_by_id(self, article_id):
+        if not self.conn._open_connection:
+            self.open_conn()
+        query = "Select * from articles where id=%s";
+        cursor = self.conn.cursor();
+        cursor.execute(query, (article_id,))
+        article = cursor.fetchone()
+
