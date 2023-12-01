@@ -1,14 +1,17 @@
 #!/usr/bin/python3
 
-import mysql.connector, json
+import mysql.connector, json, os
 class Persistencia():
 
     def __init__(self):
         self.open_conn()
 
     def open_conn(self):
+
         ruta_codi = "/home/xaviq/mysite/"
-        with open(f"{ruta_codi}env.json") as conf:
+        my_dir = os.path.dirname(__file__)
+        ruta_config = os.path.join(my_dir, "env.json")
+        with open(ruta_config) as conf:
             self.env = json.load(conf)
         self.conn = mysql.connector.connect(
                 host=self.env['db_host'],
@@ -73,3 +76,5 @@ class Persistencia():
         cursor.execute(query, (article_id,))
         article = cursor.fetchone()
 
+if __name__ == "__main__":
+    p = Persistencia()
