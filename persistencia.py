@@ -31,6 +31,8 @@ class Persistencia():
             cursor.reset()
             cursor.execute("SELECT * FROM api_keys;")
             cursor.reset()
+            cursor.execute("SELECT * FROM usuaris;")
+            cursor.reset()
         except mysql.connector.errors.ProgrammingError:
             return False
         return True
@@ -40,6 +42,7 @@ class Persistencia():
         cursor.execute("Drop table if exists articles;")
         cursor.execute("Drop table if exists usuaris;")
         cursor.execute("Drop table if exists api_keys;")
+        cursor.execute("Drop table if exists usuaris;")
 
         cursor.execute("""
                     Create table if not exists articles(
@@ -53,7 +56,7 @@ class Persistencia():
                     Create table if not exists usuaris(
                         id int not null auto_increment,
                         nom varchar(255) unique,
-                        password char(64) not null,
+                        pwd char(64) not null,
                         primary key (id)
                     )
                         """)
@@ -71,10 +74,71 @@ class Persistencia():
     def get_article_by_id(self, article_id):
         if not self.conn._open_connection:
             self.open_conn()
-        query = "Select * from articles where id=%s";
+        query = "Select id, nom, quantitat from articles where id=%s";
         cursor = self.conn.cursor();
         cursor.execute(query, (article_id,))
         article = cursor.fetchone()
+        if not article:
+            return None
+        return {
+            'id': article[0],
+            'nom': article[1],
+            'quantitat': article[2]
+            }
+    
+    def get_article_by_nom(self, article_nom):
+        if not self.conn._open_connection:
+            self.open_conn()
+        query = "Select id, nom, quantitat from articles where nom=%s";
+        cursor = self.conn.cursor();
+        cursor.execute(query, (article_nom,))
+        article = cursor.fetchone()
+        if not article:
+            return None
+        return {
+            'id': article[0],
+            'nom': article[1],
+            'quantitat': article[2]
+            }
+    
+    def remove_article_by_id(self, article_id):
+        if not self.conn._open_connection:
+            self.open_conn()
+        query = "Delete from articles where id=%s;"
+        cursor = self.conn.cursor()
+        cursor.execute(query, (article_id,))
+        self.conn.commit()
+        return True
+    
+    def insert_article(self, article):
+        if not self.conn._open_connection:
+            self.open_conn()
+        query = "insert into articles (nom, quantitat) values(%s, %s);"
+        cursor = self.conn.cursor();
+        try:
+            cursor.execute(query, (article["nom"], article["quantitat"]))
+        except:
+            return None
+        self.conn.commit()
 
+        return self.get_article_by_id(cursor.lastrowid)
+    
+    def get_usuari_by_nom(self, usuari_nom):
+        if not self.conn._open_connection:
+            self.open_conn()
+        query = "Select id, nom, pwd from usuaris where nom=%s";
+        cursor = self.conn.cursor();
+        cursor.execute(query, (usuari_nom,))
+        usuari = cursor.fetchone()
+        if not usuari:
+            return None
+        return {"id":usuari[0],"nom":usuari[1],"pwd":usuari[2]}
+
+    
 if __name__ == "__main__":
     p = Persistencia()
+    article = p.get_article_by_nom('tonyina')
+    if (article):
+        print(p.get_article_by_id(article["id"]))
+        print(p.remove_article_by_id(article["id"]))
+    print(p.insert_article({"nom": "tonyina", "quantitat": 4}))

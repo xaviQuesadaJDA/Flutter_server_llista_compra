@@ -8,11 +8,6 @@ import json
 
 app = Flask(__name__)
 
-valid_api_keys = {}
-articles = []
-last_id = 0
-
-users = {'obret':hashlib.sha256(b"sesam").hexdigest(), 'xavi':hashlib.sha256(b"1234").hexdigest()}
 
 persistencia = Persistencia()
 
@@ -55,13 +50,13 @@ def get_articles():
   if request.method == 'GET':
     return jsonify(articles)
   elif request.method == 'POST':
-    last_id +=1
     article = {
-        'id': last_id,
         'nom': request.json['nom'],
         'quantitat': request.json['quantitat']
     }
-    articles.append(article)
+    article = persistencia.insert_article(article)
+    if article is None:
+       return jsonify({}), 400
     return jsonify(article), 201
 
 @app.route('/login', methods=['POST'])
@@ -71,7 +66,10 @@ def login():
   auth = request.authorization
   usuari = auth.username
   paraula_pas = auth.password
-  if users.get(usuari, None) == hashlib.sha256(paraula_pas.encode()).hexdigest():
+  usuari = persistencia.get_usuari_by_nom(usuari)
+  if not usuari:
+     return jsonify({}), 404
+  if usuari["pwd"] == hashlib.sha256(paraula_pas.encode()).hexdigest():
     nova_api_key = uuid.uuid4().hex
     valid_api_keys[nova_api_key]= {"user": usuari}
     print(valid_api_keys)
