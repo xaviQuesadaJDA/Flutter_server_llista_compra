@@ -7,17 +7,15 @@ from persistencia import Persistencia
 import json
 
 app = Flask(__name__)
-
+valid_api_keys = {}
 
 persistencia = Persistencia()
+valid_api_keys =persistencia.get_valid_api_keys()
 
 @app.route('/articles/<int:article_id>',
            methods=['GET', 'PUT', 'DELETE'])
 def article(article_id=0):
-  global last_id
-  global articles
   global valid_api_keys
-
   if not "x-api-key" in request.headers:
       return jsonify({"status": "error", "description": "Falta capçalera x-api-key"}), 401
   if valid_api_keys.get(request.headers['x-api-key'], None) is None:
@@ -28,27 +26,22 @@ def article(article_id=0):
        return jsonify(article)
     return jsonify({}), 404
   elif request.method == 'DELETE':
-    persistencia.remove_article_by_id(article_id)
+    article = persistencia.remove_article_by_id(article_id)
     return jsonify({}), 204
   elif request.method == 'PUT':
-    for index, value in enumerate(articles):
-      if value["id"] == article_id:
-        articles[index] = request.json
-        return jsonify(articles[index]), 200
+    article = persistencia.update_article_by_id(article_id, request.json)
+    return jsonify(article), 200
 
 
 @app.route('/articles', methods=['GET', 'POST'])
 def get_articles():
-  global articles
-  global last_id
   global valid_api_keys
-
   if not "x-api-key" in request.headers:
       return jsonify({"status": "error", "description": "Falta capçalera x-api-key"}), 401
   if valid_api_keys.get(request.headers['x-api-key'], None) is None:
       return jsonify({"status": "error", "description": "Credencials no vàlides"}), 401
   if request.method == 'GET':
-    return jsonify(articles)
+    return jsonify(persistencia.get_articles())
   elif request.method == 'POST':
     article = {
         'nom': request.json['nom'],
@@ -61,18 +54,19 @@ def get_articles():
 
 @app.route('/login', methods=['POST'])
 def login():
+  global valid_api_keys
   if not "authorization" in request.headers:
           return "", 401
   auth = request.authorization
-  usuari = auth.username
+  usuari = auth.usernamekey
   paraula_pas = auth.password
   usuari = persistencia.get_usuari_by_nom(usuari)
   if not usuari:
      return jsonify({}), 404
   if usuari["pwd"] == hashlib.sha256(paraula_pas.encode()).hexdigest():
     nova_api_key = uuid.uuid4().hex
-    valid_api_keys[nova_api_key]= {"user": usuari}
-    print(valid_api_keys)
+    persistencia.add_api_key(nova_api_key, usuari)
+    valid_api_keys = persistencia.get_valid_api_keys()
     return jsonify({'resultat': 'success', 'x-api-key': nova_api_key})
   return jsonify({'resultat': 'error', 'user':usuari, 'pwd': paraula_pas}), 401
 

@@ -101,6 +101,22 @@ class Persistencia():
             'quantitat': article[2]
             }
     
+    def get_articles(self):
+        if not self.conn._open_connection:
+            self.open_conn()
+        query = "Select id, nom, quantitat from articles";
+        cursor = self.conn.cursor();
+        cursor.execute(query)
+        result_query = cursor.fetchall()
+        articles = []
+        for article in result_query:
+            articles.append({
+            'id': article[0],
+            'nom': article[1],
+            'quantitat': article[2]
+            })
+        return  articles
+    
     def remove_article_by_id(self, article_id):
         if not self.conn._open_connection:
             self.open_conn()
@@ -117,11 +133,21 @@ class Persistencia():
         cursor = self.conn.cursor();
         try:
             cursor.execute(query, (article["nom"], article["quantitat"]))
-        except:
+        except BaseException as be:
             return None
         self.conn.commit()
 
         return self.get_article_by_id(cursor.lastrowid)
+    
+    def update_article_by_id(self, id, article):
+        if not self.conn._open_connection:
+            self.open_conn()
+        query = "Update articles set nom=%s, quantitat=%s where id=%s"
+        cursor = self.conn.cursor()
+        cursor.execute(query, (article["nom"], article["quantitat"], id))
+        self.conn.commit()
+        return self.get_article_by_id(id)
+
     
     def get_usuari_by_nom(self, usuari_nom):
         if not self.conn._open_connection:
@@ -133,6 +159,32 @@ class Persistencia():
         if not usuari:
             return None
         return {"id":usuari[0],"nom":usuari[1],"pwd":usuari[2]}
+    
+    def get_valid_api_keys(self):
+        if not self.conn._open_connection:
+            self.open_conn()
+        query = "Select usuari, api_key, data_creacio from api_keys;"
+        cursor = self.conn.cursor()
+        cursor.execute(query)
+        api_keys = {}
+        for api_key in cursor.fetchall():
+            api_keys[api_key[1]]= {"user": api_key[0]}
+        return api_keys
+    
+    def add_api_key(self, key, usuari):
+        if not self.conn._open_connection:
+            self.open_conn()
+        query = "insert into api_keys (usuari, api_key) values(%s, %s);"
+        cursor = self.conn.cursor();
+        try:
+            cursor.execute(query, ( usuari["id"], key))
+        except BaseException as be:
+            return None
+        self.conn.commit()
+
+        return self.get_article_by_id(cursor.lastrowid)
+
+
 
     
 if __name__ == "__main__":
