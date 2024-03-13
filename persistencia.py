@@ -74,6 +74,8 @@ class Persistencia():
     def get_article_by_id(self, article_id):
         if not self.conn._open_connection:
             self.open_conn()
+        else:
+            self.conn.reconnect()
         query = "Select id, nom, quantitat from articles where id=%s";
         cursor = self.conn.cursor();
         cursor.execute(query, (article_id,))
@@ -89,6 +91,8 @@ class Persistencia():
     def get_article_by_nom(self, article_nom):
         if not self.conn._open_connection:
             self.open_conn()
+        else:
+            self.conn.reconnect()
         query = "Select id, nom, quantitat from articles where nom=%s";
         cursor = self.conn.cursor();
         cursor.execute(query, (article_nom,))
@@ -104,6 +108,8 @@ class Persistencia():
     def get_articles(self):
         if not self.conn._open_connection:
             self.open_conn()
+        else:
+            self.conn.reconnect()
         query = "Select id, nom, quantitat from articles";
         cursor = self.conn.cursor();
         cursor.execute(query)
@@ -120,6 +126,8 @@ class Persistencia():
     def remove_article_by_id(self, article_id):
         if not self.conn._open_connection:
             self.open_conn()
+        else:
+            self.conn.reconnect()
         query = "Delete from articles where id=%s;"
         cursor = self.conn.cursor()
         cursor.execute(query, (article_id,))
@@ -129,6 +137,8 @@ class Persistencia():
     def insert_article(self, article):
         if not self.conn._open_connection:
             self.open_conn()
+        else:
+            self.conn.reconnect()
         query = "insert into articles (nom, quantitat) values(%s, %s);"
         cursor = self.conn.cursor();
         try:
@@ -142,6 +152,8 @@ class Persistencia():
     def update_article_by_id(self, id, article):
         if not self.conn._open_connection:
             self.open_conn()
+        else:
+            self.conn.reconnect()
         query = "Update articles set nom=%s, quantitat=%s where id=%s"
         cursor = self.conn.cursor()
         cursor.execute(query, (article["nom"], article["quantitat"], id))
@@ -152,6 +164,8 @@ class Persistencia():
     def get_usuari_by_nom(self, usuari_nom):
         if not self.conn._open_connection:
             self.open_conn()
+        else:
+            self.conn.reconnect()
         query = "Select id, nom, pwd from usuaris where nom=%s";
         cursor = self.conn.cursor();
         cursor.execute(query, (usuari_nom,))
@@ -163,6 +177,8 @@ class Persistencia():
     def get_valid_api_keys(self):
         if not self.conn._open_connection:
             self.open_conn()
+        else:
+            self.conn.reconnect()
         query = "Select usuari, api_key, data_creacio from api_keys;"
         cursor = self.conn.cursor()
         cursor.execute(query)
@@ -174,6 +190,8 @@ class Persistencia():
     def add_api_key(self, key, usuari):
         if not self.conn._open_connection:
             self.open_conn()
+        else:
+            self.conn.reconnect()
         query = "insert into api_keys (usuari, api_key) values(%s, %s);"
         cursor = self.conn.cursor();
         try:
