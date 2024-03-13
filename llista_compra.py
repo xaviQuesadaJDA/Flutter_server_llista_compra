@@ -7,15 +7,18 @@ from persistencia import Persistencia
 import json
 
 app = Flask(__name__)
-valid_api_keys = {}
-
 persistencia = Persistencia()
-valid_api_keys =persistencia.get_valid_api_keys()
 
+
+@app.after_request
+def apply_caching(response):
+    response.headers["X-modul"] = "DAW2 Apps Hibrides"
+    return response
+           
 @app.route('/articles/<int:article_id>',
            methods=['GET', 'PUT', 'DELETE'])
 def article(article_id=0):
-  global valid_api_keys
+  valid_api_keys =persistencia.get_valid_api_keys()
   if not "x-api-key" in request.headers:
       return jsonify({"status": "error", "description": "Falta capçalera x-api-key"}), 401
   if valid_api_keys.get(request.headers['x-api-key'], None) is None:
@@ -35,7 +38,7 @@ def article(article_id=0):
 
 @app.route('/articles', methods=['GET', 'POST'])
 def get_articles():
-  global valid_api_keys
+  valid_api_keys =persistencia.get_valid_api_keys()
   if not "x-api-key" in request.headers:
       return jsonify({"status": "error", "description": "Falta capçalera x-api-key"}), 401
   if valid_api_keys.get(request.headers['x-api-key'], None) is None:
@@ -54,7 +57,7 @@ def get_articles():
 
 @app.route('/login', methods=['POST'])
 def login():
-  global valid_api_keys
+  valid_api_keys =persistencia.get_valid_api_keys()
   if not "authorization" in request.headers:
           return "", 401
   auth = request.authorization
