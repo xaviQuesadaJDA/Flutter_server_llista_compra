@@ -61,6 +61,8 @@ class Persistencia():
                     )
                         """)
         cursor.execute("""
+                    Insert into usuaris(nom, pwd) values('obret', 'db6b24692506611e2549894ab528b028af27e114f74fabf2fcb2b0e740fe5a04');
+        cursor.execute("""
                     Create table if not exists api_keys(
                         id int not null auto_increment,
                         usuari int not null references usuaris(id),
